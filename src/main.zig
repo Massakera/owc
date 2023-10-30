@@ -11,10 +11,9 @@ pub fn main() !void {
                 std.debug.print("Error: Missing filename argument.\n", .{});
                 return;
             }
-            try countBytes(filename.?); // Unwrap the optional value
+            try countBytes(filename.?);
         } else {
-            // unexpected argument
-            std.debug.print("Error: Unexpected argument '{s}'.\n", .{arg}); // Corrected format specifier
+            std.debug.print("Error: Unexpected argument '{s}'.\n", .{arg});
             return;
         }
     }
@@ -27,5 +26,5 @@ fn countBytes(filename: []const u8) !void {
     const fileInfo = try file.stat();
     const fileSize = fileInfo.size;
 
-    std.debug.print("{d} {s}\n", .{ fileSize, filename }); // Corrected format specifier
+    std.debug.print("{d} {s}\n", .{ fileSize, filename });
 }
