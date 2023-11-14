@@ -19,6 +19,13 @@ pub fn main() !void {
                 return;
             }
             try countLines(filename.?);
+        } else if (std.mem.eql(u8, arg, "-w")) {
+            const filename = args.next();
+            if (filename == null) {
+                std.debug.print("Error: Missing filename argument. \n", .{});
+                return;
+            }
+            try countWords(filename.?);
         } else {
             std.debug.print("Error: Unexpected argument '{s}'.\n", .{arg});
             return;
@@ -39,12 +46,43 @@ fn countBytes(filename: []const u8) !void {
 fn countLines(filename: []const u8) !void {
     const file = try std.fs.cwd().openFile(filename, .{});
     defer file.close();
-    
+
     var lineCount: usize = 0;
     var buffer: [4096]u8 = undefined;
     while (try file.reader().readUntilDelimiterOrEof(&buffer, '\n')) |_| {
         lineCount += 1;
     }
-    
-    std.debug.print("{d} {s}\n", .{ lineCount,filename });
+
+    std.debug.print("{d} {s}\n", .{ lineCount, filename });
+}
+
+fn countWords(filename: []const u8) !void {
+    const file = try std.fs.cwd().openFile(filename, .{ .read = true });
+    defer file.close();
+
+    var wordCount: usize = 0;
+    var buffer: [4096]u8 = undefined;
+    var inWord = false;
+
+    while (try file.reader().read(&buffer)) |chunk| {
+        var index: usize = 0;
+        while (index < chunk.len) {
+            const c = chunk[index];
+            const isDelimiter = c == ' ' or c == '\n' or c == '\t' or c == '\r';
+            if (inWord and isDelimiter) {
+                wordCount += 1;
+                inWord = false;
+            } else if (!inWord and !isDelimiter) {
+                inWord = true;
+            }
+            index += 1;
+        }
+    }
+
+    // If the file ends while still in a word, count that word
+    if (inWord) {
+        wordCount += 1;
+    }
+
+    std.debug.print("{d} {s}\n", .{ wordCount, filename });
 }
