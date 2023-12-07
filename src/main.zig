@@ -4,39 +4,36 @@ pub fn main() !void {
     var args = std.process.args();
     _ = args.skip(); // Skip the program name argument and discard the return value
 
+    var optionProvided = false;
+
     while (args.next()) |arg| {
         if (std.mem.eql(u8, arg, "-c")) {
+            optionProvided = true;
             const filename = args.next();
-            if (filename == null) {
-                std.debug.print("Error: Missing filename argument.\n", .{});
-                return;
-            }
             try countBytes(filename.?);
         } else if (std.mem.eql(u8, arg, "-l")) {
+            optionProvided = true;
             const filename = args.next();
-            if (filename == null) {
-                std.debug.print("Error: Missing filename argument. \n", .{});
-                return;
-            }
             try countLines(filename.?);
         } else if (std.mem.eql(u8, arg, "-w")) {
+            optionProvided = true;
             const filename = args.next();
-            if (filename == null) {
-                std.debug.print("Error: Missing filename argument. \n", .{});
-                return;
-            }
             try countWords(filename.?);
         } else if (std.mem.eql(u8, arg, "-m")) {
+            optionProvided = true;
             const filename = args.next();
-            if (filename == null) {
-                std.debug.print("Error: Missing filename argument. \n", .{});
-                return;
-            }
             try countCharacters(filename.?);
         } else {
             std.debug.print("Error: Unexpected argument '{s}'.\n", .{arg});
             return;
         }
+    }
+
+    if (!optionProvided) {
+        const filename: []const u8 = args.next().?;
+        try countBytes(filename);
+        try countLines(filename);
+        try countWords(filename);
     }
 }
 
@@ -64,17 +61,20 @@ fn countLines(filename: []const u8) !void {
 }
 
 fn countWords(filename: []const u8) !void {
-    const file = try std.fs.cwd().openFile(filename, .{ .read = true });
+    const file = try std.fs.cwd().openFile(filename, .{});
     defer file.close();
 
     var wordCount: usize = 0;
     var buffer: [4096]u8 = undefined;
     var inWord = false;
 
-    while (try file.reader().read(&buffer)) |chunk| {
+    while (true) {
+        const bytesRead = try file.reader().read(&buffer);
+        if (bytesRead == 0) break; // End of file
+
         var index: usize = 0;
-        while (index < chunk.len) {
-            const c = chunk[index];
+        while (index < bytesRead) {
+            const c = buffer[index];
             const isDelimiter = c == ' ' or c == '\n' or c == '\t' or c == '\r';
             if (inWord and isDelimiter) {
                 wordCount += 1;
@@ -100,8 +100,12 @@ fn countCharacters(filename: []const u8) !void {
 
     var characterCount: usize = 0;
     var buffer: [4096]u8 = undefined;
-    while (try file.reader().read(&buffer)) |chunk| {
-        characterCount += chunk.len;
+
+    while (true) {
+        const bytesRead = try file.reader().read(&buffer);
+        if (bytesRead == 0) break; // End of file
+
+        characterCount += bytesRead; // Add the number of bytes read to the character count
     }
 
     std.debug.print("{d} {s}\n", .{ characterCount, filename });
