@@ -26,6 +26,13 @@ pub fn main() !void {
                 return;
             }
             try countWords(filename.?);
+        } else if (std.mem.eql(u8, arg, "-m")) {
+            const filename = args.next();
+            if (filename == null) {
+                std.debug.print("Error: Missing filename argument. \n", .{});
+                return;
+            }
+            try countCharacters(filename.?);
         } else {
             std.debug.print("Error: Unexpected argument '{s}'.\n", .{arg});
             return;
@@ -85,4 +92,17 @@ fn countWords(filename: []const u8) !void {
     }
 
     std.debug.print("{d} {s}\n", .{ wordCount, filename });
+}
+
+fn countCharacters(filename: []const u8) !void {
+    const file = try std.fs.cwd().openFile(filename, .{});
+    defer file.close();
+
+    var characterCount: usize = 0;
+    var buffer: [4096]u8 = undefined;
+    while (try file.reader().read(&buffer)) |chunk| {
+        characterCount += chunk.len;
+    }
+
+    std.debug.print("{d} {s}\n", .{ characterCount, filename });
 }
