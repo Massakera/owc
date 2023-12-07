@@ -2,10 +2,10 @@ const std = @import("std");
 
 pub fn main() !void {
     var args = std.process.args();
-    _ = args.skip(); // Skip the program name argument
+    _ = args.skip();
 
     var operation: enum { CountLines, CountWords, CountBytes, CountCharacters, None } = .None;
-    var filename: ?[]const u8 = null; // Optional filename
+    var filename: ?[]const u8 = null;
 
     while (args.next()) |arg| {
         if (std.mem.eql(u8, arg, "-c")) {
@@ -17,7 +17,6 @@ pub fn main() !void {
         } else if (std.mem.eql(u8, arg, "-m")) {
             operation = .CountCharacters;
         } else {
-            // Treat as a filename if it's not an option flag
             if (filename == null) {
                 filename = arg;
             } else {
@@ -27,7 +26,6 @@ pub fn main() !void {
         }
     }
 
-    // Perform the operation based on the source of input (file or stdin)
     if (filename) |fname| {
         switch (operation) {
             .CountBytes => try countBytes(fname),
@@ -41,7 +39,6 @@ pub fn main() !void {
             },
         }
     } else {
-        // Read from stdin if no filename is provided
         const stdinReader = std.io.getStdIn().reader();
         switch (operation) {
             .CountBytes => try countBytesFromReader(stdinReader),
@@ -90,7 +87,7 @@ fn countWords(filename: []const u8) !void {
 
     while (true) {
         const bytesRead = try file.reader().read(&buffer);
-        if (bytesRead == 0) break; // End of file
+        if (bytesRead == 0) break;
 
         var index: usize = 0;
         while (index < bytesRead) {
@@ -106,7 +103,6 @@ fn countWords(filename: []const u8) !void {
         }
     }
 
-    // If the file ends while still in a word, count that word
     if (inWord) {
         wordCount += 1;
     }
@@ -123,9 +119,9 @@ fn countCharacters(filename: []const u8) !void {
 
     while (true) {
         const bytesRead = try file.reader().read(&buffer);
-        if (bytesRead == 0) break; // End of file
+        if (bytesRead == 0) break;
 
-        characterCount += bytesRead; // Add the number of bytes read to the character count
+        characterCount += bytesRead;
     }
 
     std.debug.print("{d} {s}\n", .{ characterCount, filename });
@@ -148,9 +144,9 @@ fn countBytesFromReader(reader: anytype) !void {
 
     while (true) {
         const bytesRead = try reader.read(&buffer);
-        if (bytesRead == 0) break; // End of file
+        if (bytesRead == 0) break;
 
-        byteCount += bytesRead; // Add the number of bytes read to the byte count
+        byteCount += bytesRead;
     }
 
     std.debug.print("{d}\n", .{byteCount});
@@ -162,9 +158,9 @@ fn countCharactersFromReader(reader: anytype) !void {
 
     while (true) {
         const bytesRead = try reader.read(&buffer);
-        if (bytesRead == 0) break; // End of file
+        if (bytesRead == 0) break;
 
-        characterCount += bytesRead; // Add the number of bytes read to the character count
+        characterCount += bytesRead;
     }
 
     std.debug.print("{d}\n", .{characterCount});
@@ -177,7 +173,7 @@ fn countWordsFromReader(reader: anytype) !void {
 
     while (true) {
         const bytesRead = try reader.read(&buffer);
-        if (bytesRead == 0) break; // End of file
+        if (bytesRead == 0) break;
 
         var index: usize = 0;
         while (index < bytesRead) {
@@ -193,7 +189,6 @@ fn countWordsFromReader(reader: anytype) !void {
         }
     }
 
-    // If the file ends while still in a word, count that word
     if (inWord) {
         wordCount += 1;
     }
